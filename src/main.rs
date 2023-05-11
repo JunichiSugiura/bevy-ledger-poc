@@ -1,5 +1,5 @@
 use bevy::{prelude::*, winit::WinitSettings};
-use bevy_ledger::{ui::Ui2DPlugin, LedgerPlugin};
+use bevy_ledger::{ui::Ui2DPlugin, LedgerPlugins};
 
 fn main() {
     App::new()
@@ -10,7 +10,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(LedgerPlugin) // <- I made these this time
+        .add_plugins(LedgerPlugins) // <- I made these this time
         .add_plugin(Ui2DPlugin) // <-
         .insert_resource(WinitSettings::desktop_app())
         .run();

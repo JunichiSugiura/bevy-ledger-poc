@@ -1,7 +1,4 @@
-use crate::{
-    device::Device,
-    event::{GetVersion, OpenApp, ScanDevices},
-};
+use crate::{device::Device, event::general::*};
 use bevy::{ecs::entity::Entity, log, prelude::*};
 
 pub struct Ui2DPlugin;

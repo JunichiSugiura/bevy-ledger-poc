@@ -3,7 +3,6 @@ mod constant;
 mod device;
 mod error;
 pub mod event;
-mod hid;
 mod transport;
 pub mod ui;
 
@@ -12,8 +11,8 @@ use bevy::{log, prelude::*};
 use constant::{CLA_DEVICE_INFO, INS_DEVICE_INFO};
 use device::Device;
 use event::{GetDeviceInfo, ScanDevices};
-use hid::HidManager;
 use hidapi::HidApi;
+use transport::Transport;
 
 pub struct DevicePlugin;
 
@@ -21,34 +20,18 @@ impl Plugin for DevicePlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<ScanDevices>()
             .add_event::<GetDeviceInfo>()
-            .add_startup_system(setup_hid_manager)
             .add_systems((scan_devices, log_added_devices, get_device_info));
     }
 }
 
-fn setup_hid_manager(mut commands: Commands) {
-    log::info!("Setting up HID manager");
-
-    match HidApi::new() {
-        Ok(api) => {
-            commands.insert_resource(HidManager::new(api));
-        }
-        Err(e) => {
-            log::error!("Error: {}", e);
-        }
-    }
-}
-
-fn scan_devices(
-    mut events: EventReader<ScanDevices>,
-    mut commands: Commands,
-    hid_manager: Res<HidManager>,
-) {
+fn scan_devices(mut events: EventReader<ScanDevices>, mut commands: Commands) {
     events.iter().for_each(|_e| {
         log::info!("Scanning devices");
 
+        let api = HidApi::new().unwrap();
         let mut is_empty = true;
-        hid_manager.list().for_each(|d| {
+
+        api.device_list().for_each(|d| {
             let device = Device::from(d.clone());
             if device.is_ledger() {
                 is_empty = false;
@@ -62,14 +45,11 @@ fn scan_devices(
     });
 }
 
-fn get_device_info(
-    mut events: EventReader<GetDeviceInfo>,
-    hid_manager: Res<HidManager>,
-    query: Query<(Entity, &Device)>,
-) {
+fn get_device_info(mut events: EventReader<GetDeviceInfo>, query: Query<(Entity, &Device)>) {
     events.iter().for_each(|e| {
-        query.iter().for_each(|(entity, device)| {
-            if e.entity == entity {
+        query.iter().for_each(|(device_id, device)| {
+            if e.device_id == device_id {
+                let t = Transport::open(&device).expect("Failed to open transport");
                 let cmd = APDUCommand {
                     cla: CLA_DEVICE_INFO,
                     ins: INS_DEVICE_INFO,
@@ -77,8 +57,6 @@ fn get_device_info(
                     p2: 0x00,
                     data: Vec::<u8>::new(),
                 };
-
-                let t = hid_manager.open(&device).expect("Failed to open transport");
 
                 match t.exchange(cmd) {
                     Ok(res) => {
@@ -92,6 +70,13 @@ fn get_device_info(
         });
     });
 }
+
+// fn open_device_app(
+//     mut events: EventReader<GetDeviceInfo>,
+//     hid_manager: Res<HidManager>,
+//     query: Query<(Entity, &Device)>,
+// ) {
+// }
 
 fn log_added_devices(query: Query<&Device, Added<Device>>) {
     query.iter().for_each(|d| {

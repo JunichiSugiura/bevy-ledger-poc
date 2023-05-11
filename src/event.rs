@@ -3,5 +3,9 @@ use bevy::ecs::entity::Entity;
 pub struct ScanDevices;
 
 pub struct GetDeviceInfo {
-    pub entity: Entity,
+    pub device_id: Entity,
+}
+
+pub struct OpenDeviceApp {
+    pub device_id: Entity,
 }

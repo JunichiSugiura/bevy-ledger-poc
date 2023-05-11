@@ -151,7 +151,7 @@ fn device_info_button(
                 } else {
                     get_device_info.send(GetDeviceInfo {
                         // Todo: Let user choose a device
-                        entity: devices.single().0,
+                        device_id: devices.single().0,
                     });
                 }
             }

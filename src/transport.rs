@@ -1,11 +1,12 @@
 use crate::{
     apdu::{APDUAnswer, APDUCommand},
     constant::{LEDGER_CHANNEL, LEDGER_PACKET_READ_SIZE, LEDGER_PACKET_WRITE_SIZE, LEDGER_TIMEOUT},
+    device::Device,
     error::DeviceHIDError,
 };
 use bevy::{ecs::system::Resource, log};
 use byteorder::{BigEndian, ReadBytesExt};
-use hidapi::HidDevice;
+use hidapi::{HidApi, HidDevice};
 use std::{io::Cursor, ops::Deref, sync::Mutex};
 
 #[derive(Resource)]
@@ -14,6 +15,15 @@ pub struct Transport {
 }
 
 impl Transport {
+    pub fn open(device: &Device) -> Result<Transport, DeviceHIDError> {
+        let api = Self::api();
+        let device = device.open(&api)?;
+        device.set_blocking_mode(true)?;
+        let transport = Transport::new(device);
+
+        Ok(transport)
+    }
+
     pub fn new(device: HidDevice) -> Self {
         Self {
             device: Mutex::new(device),
@@ -34,6 +44,10 @@ impl Transport {
             .map_err(|_| DeviceHIDError::Comm("response was too short"))?;
 
         Ok(answer)
+    }
+
+    fn api() -> HidApi {
+        HidApi::new().unwrap()
     }
 
     fn write_apdu(device: &HidDevice, channel: u16, apdu_command: &[u8]) -> eyre::Result<i32> {

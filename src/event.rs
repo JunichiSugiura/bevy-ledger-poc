@@ -8,4 +8,5 @@ pub struct GetDeviceInfo {
 
 pub struct OpenDeviceApp {
     pub device_id: Entity,
+    pub name: &'static str,
 }

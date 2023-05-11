@@ -1,6 +1,6 @@
 use crate::{
     device::Device,
-    event::{GetDeviceInfo, ScanDevices},
+    event::{GetDeviceInfo, OpenDeviceApp, ScanDevices},
 };
 use bevy::{ecs::entity::Entity, log, prelude::*};
 
@@ -12,6 +12,7 @@ impl Plugin for Ui2DPlugin {
             button_color,
             scan_devices_button,
             device_info_button,
+            open_device_app_button,
         ));
     }
 }
@@ -21,6 +22,9 @@ struct ScanButton;
 
 #[derive(Component)]
 struct DeviceInfoButton;
+
+#[derive(Component)]
+struct OpenDeviceAppButton;
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
@@ -104,6 +108,45 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ));
                 });
         });
+
+    // Open device app button
+    // Todo: Text field
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::width(Val::Percent(100.0)),
+                justify_content: JustifyContent::Center,
+                padding: UiRect::vertical(Val::Px(10.0)),
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            size: Size::new(Val::Px(200.0), Val::Px(40.0)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        background_color: NORMAL_BUTTON.into(),
+                        ..default()
+                    },
+                    OpenDeviceAppButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Open Ethereum app",
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 20.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
+        });
 }
 
 fn button_color(
@@ -154,6 +197,32 @@ fn device_info_button(
                         device_id: devices.single().0,
                     });
                 }
+            }
+            _ => {}
+        };
+    });
+}
+
+fn open_device_app_button(
+    query: Query<
+        &Interaction,
+        (
+            Changed<Interaction>,
+            With<Button>,
+            With<OpenDeviceAppButton>,
+        ),
+    >,
+    devices: Query<(Entity, &Device)>,
+    mut open_device_app: EventWriter<OpenDeviceApp>,
+) {
+    query.for_each(|interaction| {
+        match *interaction {
+            Interaction::Clicked => {
+                open_device_app.send(OpenDeviceApp {
+                    // Todo: Let user choose a device
+                    device_id: devices.single().0,
+                    name: "ethereum",
+                });
             }
             _ => {}
         };

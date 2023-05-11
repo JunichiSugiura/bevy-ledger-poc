@@ -10,7 +10,7 @@ use apdu::APDUCommand;
 use bevy::{log, prelude::*};
 use constant::{CLA_DEVICE_INFO, INS_DEVICE_INFO};
 use device::Device;
-use event::{GetDeviceInfo, ScanDevices};
+use event::{GetDeviceInfo, OpenDeviceApp, ScanDevices};
 use hidapi::HidApi;
 use transport::Transport;
 
@@ -20,7 +20,13 @@ impl Plugin for DevicePlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<ScanDevices>()
             .add_event::<GetDeviceInfo>()
-            .add_systems((scan_devices, log_added_devices, get_device_info));
+            .add_event::<OpenDeviceApp>()
+            .add_systems((
+                scan_devices,
+                log_added_devices,
+                get_device_info,
+                open_device_app,
+            ));
     }
 }
 
@@ -45,6 +51,7 @@ fn scan_devices(mut events: EventReader<ScanDevices>, mut commands: Commands) {
     });
 }
 
+// Todo: Ledger device: communication error `response was too short`
 fn get_device_info(mut events: EventReader<GetDeviceInfo>, query: Query<(Entity, &Device)>) {
     events.iter().for_each(|e| {
         query.iter().for_each(|(device_id, device)| {
@@ -71,12 +78,32 @@ fn get_device_info(mut events: EventReader<GetDeviceInfo>, query: Query<(Entity,
     });
 }
 
-// fn open_device_app(
-//     mut events: EventReader<GetDeviceInfo>,
-//     hid_manager: Res<HidManager>,
-//     query: Query<(Entity, &Device)>,
-// ) {
-// }
+// Todo: Ledger device: communication error `response was too short`
+fn open_device_app(mut events: EventReader<OpenDeviceApp>, query: Query<(Entity, &Device)>) {
+    events.iter().for_each(|e| {
+        query.iter().for_each(|(device_id, device)| {
+            if e.device_id == device_id {
+                let t = Transport::open(&device).expect("Failed to open transport");
+                let cmd = APDUCommand {
+                    cla: CLA_DEVICE_INFO,
+                    ins: INS_DEVICE_INFO,
+                    p1: 0x00,
+                    p2: 0x00,
+                    data: e.name.as_bytes().to_vec(),
+                };
+
+                match t.exchange(cmd) {
+                    Ok(res) => {
+                        log::info!("{res:#?}");
+                    }
+                    Err(e) => {
+                        log::error!("{e}");
+                    }
+                }
+            }
+        });
+    });
+}
 
 fn log_added_devices(query: Query<&Device, Added<Device>>) {
     query.iter().for_each(|d| {

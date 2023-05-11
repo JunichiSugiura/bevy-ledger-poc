@@ -23,6 +23,12 @@ Create a bevy plugin to interact with ledger devices. Also provide UI for demo.
 cargo run
 ```
 
+### Docs
+
+```sh
+cargo doc --no-deps --open
+```
+
 ### Dependencies
 
 - [ruabmbua/hidapi-rs](https://github.com/ruabmbua/hidapi-rs): Rust bindings for the hidapi C library

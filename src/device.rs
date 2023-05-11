@@ -9,10 +9,6 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn new(inner: DeviceInfo) -> Self {
-        Self { inner }
-    }
-
     pub fn is_ledger(&self) -> bool {
         self.inner.vendor_id() == LEDGER_VID && self.inner.usage_page() == LEDGER_USAGE_PAGE
     }

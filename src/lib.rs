@@ -1,7 +1,7 @@
-mod apdu;
+pub mod apdu;
 mod constant;
 mod device;
-mod error;
+pub mod error;
 pub mod event;
 mod transport;
 pub mod ui;
@@ -10,23 +10,18 @@ use apdu::APDUCommand;
 use bevy::{log, prelude::*};
 use constant::{CLA_DEVICE_INFO, CLA_OPEN_APP, INS_DEVICE_INFO, INS_OPEN_APP};
 use device::Device;
-use event::{GetDeviceInfo, OpenDeviceApp, ScanDevices};
+use event::{GetVersion, OpenApp, ScanDevices};
 use hidapi::HidApi;
 use transport::Transport;
 
-pub struct DevicePlugin;
+pub struct LedgerPlugin;
 
-impl Plugin for DevicePlugin {
+impl Plugin for LedgerPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<ScanDevices>()
-            .add_event::<GetDeviceInfo>()
-            .add_event::<OpenDeviceApp>()
-            .add_systems((
-                scan_devices,
-                log_added_devices,
-                get_device_info,
-                open_device_app,
-            ));
+            .add_event::<GetVersion>()
+            .add_event::<OpenApp>()
+            .add_systems((scan_devices, get_version, open_app, log_added_devices));
     }
 }
 
@@ -54,7 +49,7 @@ fn scan_devices(mut events: EventReader<ScanDevices>, mut commands: Commands) {
 
 /// Request device info (getVersion)
 // Todo: Ledger device: communication error `response was too short`
-fn get_device_info(mut events: EventReader<GetDeviceInfo>, query: Query<(Entity, &Device)>) {
+fn get_version(mut events: EventReader<GetVersion>, query: Query<(Entity, &Device)>) {
     events.iter().for_each(|e| {
         query.iter().for_each(|(device_id, device)| {
             if e.device_id == device_id {
@@ -89,7 +84,7 @@ fn get_device_info(mut events: EventReader<GetDeviceInfo>, query: Query<(Entity,
 /// Open specific firmware app
 /// https://ledgerhq.atlassian.net/wiki/spaces/WALLETCO/pages/3753377984/An+attempt+at+APDU+specs#openApp-e0d80000xx
 // Todo: Ledger device: communication error `response was too short`
-fn open_device_app(mut events: EventReader<OpenDeviceApp>, query: Query<(Entity, &Device)>) {
+fn open_app(mut events: EventReader<OpenApp>, query: Query<(Entity, &Device)>) {
     events.iter().for_each(|e| {
         query.iter().for_each(|(device_id, device)| {
             if e.device_id == device_id {
@@ -105,6 +100,7 @@ fn open_device_app(mut events: EventReader<OpenDeviceApp>, query: Query<(Entity,
 
                         match t.exchange(cmd) {
                             Ok(res) => {
+                                // Todo: Parse APDUAnswer
                                 log::info!("{res:?}");
                             }
                             Err(e) => {

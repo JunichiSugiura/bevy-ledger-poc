@@ -1,6 +1,6 @@
 use crate::{
     device::Device,
-    event::{GetDeviceInfo, OpenDeviceApp, ScanDevices},
+    event::{GetVersion, OpenApp, ScanDevices},
 };
 use bevy::{ecs::entity::Entity, log, prelude::*};
 
@@ -8,11 +8,11 @@ pub struct Ui2DPlugin;
 
 impl Plugin for Ui2DPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_ui).add_systems((
-            button_hover,
-            scan_devices_button,
-            device_info_button,
-            open_device_app_button,
+        app.add_startup_system(spawn_buttons).add_systems((
+            button_hover_style,
+            on_click_scan_devices,
+            on_click_get_version,
+            on_click_open_app,
         ));
     }
 }
@@ -21,20 +21,20 @@ impl Plugin for Ui2DPlugin {
 struct ScanButton;
 
 #[derive(Component)]
-struct DeviceInfoButton;
+struct GetVersionButton;
 
 #[derive(Component)]
-struct OpenDeviceAppButton;
+struct OpenAppButton;
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.35, 0.35);
 
 /// Spawn buttons
-fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_buttons(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 
-    // Scan button
+    // Scan devices button
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -72,7 +72,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 });
         });
 
-    // Device info button
+    // Get version button
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -96,7 +96,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         background_color: NORMAL_BUTTON.into(),
                         ..default()
                     },
-                    DeviceInfoButton,
+                    GetVersionButton,
                 ))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
@@ -110,7 +110,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 });
         });
 
-    // Open device app button
+    // Open app button
     // Todo: Text field
     commands
         .spawn(NodeBundle {
@@ -135,7 +135,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         background_color: NORMAL_BUTTON.into(),
                         ..default()
                     },
-                    OpenDeviceAppButton,
+                    OpenAppButton,
                 ))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
@@ -151,7 +151,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 /// Change button color on mouse hover
-fn button_hover(
+fn button_hover_style(
     mut query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<Button>)>,
 ) {
     query.for_each_mut(|(interaction, mut color)| {
@@ -170,7 +170,7 @@ fn button_hover(
 }
 
 /// Emit `ScanDevices` event when user clicks button
-fn scan_devices_button(
+fn on_click_scan_devices(
     query: Query<&Interaction, (Changed<Interaction>, With<Button>, With<ScanButton>)>,
     mut scan_devices: EventWriter<ScanDevices>,
 ) {
@@ -185,10 +185,10 @@ fn scan_devices_button(
 }
 
 /// Emit `GetDeviceInfo` event on click
-fn device_info_button(
-    interactions: Query<&Interaction, (Changed<Interaction>, With<Button>, With<DeviceInfoButton>)>,
+fn on_click_get_version(
+    interactions: Query<&Interaction, (Changed<Interaction>, With<Button>, With<GetVersionButton>)>,
     devices: Query<(Entity, &Device)>,
-    mut get_device_info: EventWriter<GetDeviceInfo>,
+    mut get_version: EventWriter<GetVersion>,
 ) {
     interactions.for_each(|interaction| {
         match *interaction {
@@ -198,7 +198,7 @@ fn device_info_button(
                         "No device is detected by device manager. Make sure to scan devices first."
                     );
                 } else {
-                    get_device_info.send(GetDeviceInfo {
+                    get_version.send(GetVersion {
                         // Todo: Let user choose a device
                         device_id: devices.single().0,
                     });
@@ -210,22 +210,15 @@ fn device_info_button(
 }
 
 /// Emit `OpenDeviceApp` event on click
-fn open_device_app_button(
-    query: Query<
-        &Interaction,
-        (
-            Changed<Interaction>,
-            With<Button>,
-            With<OpenDeviceAppButton>,
-        ),
-    >,
+fn on_click_open_app(
+    query: Query<&Interaction, (Changed<Interaction>, With<Button>, With<OpenAppButton>)>,
     devices: Query<(Entity, &Device)>,
-    mut open_device_app: EventWriter<OpenDeviceApp>,
+    mut open_app: EventWriter<OpenApp>,
 ) {
     query.for_each(|interaction| {
         match *interaction {
             Interaction::Clicked => {
-                open_device_app.send(OpenDeviceApp {
+                open_app.send(OpenApp {
                     // Todo: Let user choose a device
                     device_id: devices.single().0,
                     name: "Ethereum",

@@ -1,20 +1,19 @@
-use crate::error::{APDUAnswerError, APDUErrorCode};
 use std::ops::Deref;
 
 #[derive(Debug, Clone)]
 /// An APDU command
 pub struct APDUCommand<B> {
-    ///APDU Class
+    /// APDU Class
     ///
     /// An incorrect APDU Class will prevent you from communicating with the device
     pub cla: u8,
-    ///APDU Instruction
+    /// APDU Instruction
     pub ins: u8,
-    ///First parameter of instruction
+    /// First parameter of instruction
     pub p1: u8,
-    ///Second parameter of instruction
+    /// Second parameter of instruction
     pub p2: u8,
-    ///Payload of the instruction, can be empty
+    /// Payload of the instruction, can be empty
     pub data: B,
 }
 
@@ -57,28 +56,28 @@ where
         })
     }
 
-    /// Will return the answer's payload
-    #[inline(always)]
-    pub fn apdu_data(&self) -> &[u8] {
-        &self.data[..self.data.len() - 2]
-    }
+    // /// Will return the answer's payload
+    // #[inline(always)]
+    // pub fn apdu_data(&self) -> &[u8] {
+    //     &self.data[..self.data.len() - 2]
+    // }
 
-    /// Will return the answer's payload
-    #[inline(always)]
-    pub fn data(&self) -> &[u8] {
-        self.apdu_data()
-    }
+    // /// Will return the answer's payload
+    // #[inline(always)]
+    // pub fn data(&self) -> &[u8] {
+    //     self.apdu_data()
+    // }
 
-    /// Will attempt to interpret the error code as an [APDUErrorCode],
-    /// returning the code as is otherwise
-    pub fn error_code(&self) -> eyre::Result<APDUErrorCode, u16> {
-        todo!("Parse error code into APDUErrorCode");
-        // self.retcode.try_into().map_err(|_| self.retcode)
-    }
+    // /// Will attempt to interpret the error code as an [APDUErrorCode],
+    // /// returning the code as is otherwise
+    // pub fn error_code(&self) -> eyre::Result<APDUErrorCode, u16> {
+    //     todo!("Parse error code into APDUErrorCode");
+    //     // self.retcode.try_into().map_err(|_| self.retcode)
+    // }
 
-    /// Returns the raw return code
-    #[inline(always)]
-    pub fn retcode(&self) -> u16 {
-        self.retcode
-    }
+    // /// Returns the raw return code
+    // #[inline(always)]
+    // pub fn retcode(&self) -> u16 {
+    //     self.retcode
+    // }
 }

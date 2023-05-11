@@ -9,3 +9,6 @@ pub const LEDGER_TIMEOUT: i32 = 10_000_000;
 
 pub const CLA_DEVICE_INFO: u8 = 0xe0;
 pub const INS_DEVICE_INFO: u8 = 0x01;
+
+pub const CLA_OPEN_APP: u8 = 0xe0;
+pub const INS_OPEN_APP: u8 = 0xd8;

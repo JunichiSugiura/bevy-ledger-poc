@@ -44,9 +44,10 @@ where
 {
     /// Attempt to interpret the given slice as an APDU answer
     pub fn from_answer(answer: B) -> eyre::Result<Self> {
-        if answer.len() >= 2 {
-            return Err(APDUAnswerError::TooShort.into());
-        }
+        // Todo: Investigate whay it exists
+        // if answer.len() >= 2 {
+        //     return Err(APDUAnswerError::TooShort.into());
+        // }
         let retcode = arrayref::array_ref!(answer, answer.len() - 2, 2);
         let retcode = u16::from_be_bytes(*retcode);
 

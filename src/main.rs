@@ -10,8 +10,8 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(DevicePlugin)
-        .add_plugin(Ui2DPlugin)
+        .add_plugin(DevicePlugin) // <- I made these this time
+        .add_plugin(Ui2DPlugin) // <-
         .insert_resource(WinitSettings::desktop_app())
         .run();
 }

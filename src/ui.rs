@@ -9,7 +9,7 @@ pub struct Ui2DPlugin;
 impl Plugin for Ui2DPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_ui).add_systems((
-            button_color,
+            button_hover,
             scan_devices_button,
             device_info_button,
             open_device_app_button,
@@ -30,6 +30,7 @@ const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.35, 0.35);
 
+/// Spawn buttons
 fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 
@@ -149,22 +150,26 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-fn button_color(
+/// Change button color on mouse hover
+fn button_hover(
     mut query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<Button>)>,
 ) {
-    query.for_each_mut(|(interaction, mut color)| match *interaction {
-        Interaction::Clicked => {
-            *color = PRESSED_BUTTON.into();
-        }
-        Interaction::Hovered => {
-            *color = HOVERED_BUTTON.into();
-        }
-        Interaction::None => {
-            *color = NORMAL_BUTTON.into();
-        }
+    query.for_each_mut(|(interaction, mut color)| {
+        match *interaction {
+            Interaction::Clicked => {
+                *color = PRESSED_BUTTON.into();
+            }
+            Interaction::Hovered => {
+                *color = HOVERED_BUTTON.into();
+            }
+            Interaction::None => {
+                *color = NORMAL_BUTTON.into();
+            }
+        };
     });
 }
 
+/// Emit `ScanDevices` event when user clicks button
 fn scan_devices_button(
     query: Query<&Interaction, (Changed<Interaction>, With<Button>, With<ScanButton>)>,
     mut scan_devices: EventWriter<ScanDevices>,
@@ -179,6 +184,7 @@ fn scan_devices_button(
     });
 }
 
+/// Emit `GetDeviceInfo` event on click
 fn device_info_button(
     interactions: Query<&Interaction, (Changed<Interaction>, With<Button>, With<DeviceInfoButton>)>,
     devices: Query<(Entity, &Device)>,
@@ -203,6 +209,7 @@ fn device_info_button(
     });
 }
 
+/// Emit `OpenDeviceApp` event on click
 fn open_device_app_button(
     query: Query<
         &Interaction,
@@ -221,7 +228,7 @@ fn open_device_app_button(
                 open_device_app.send(OpenDeviceApp {
                     // Todo: Let user choose a device
                     device_id: devices.single().0,
-                    name: "ethereum",
+                    name: "Ethereum",
                 });
             }
             _ => {}

@@ -1,0 +1,13 @@
+[package]
+name = "bevy_ledger"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+arrayref = "0.3"
+bevy = { version = "0.10" }
+byteorder = "1"
+eyre = "0.6"
+hex = "0.4"
+hidapi = { version = "2.3", default-features = false }
+thiserror = "1"
